@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Campus Insight — Student Lifestyle Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ══ MODE SOMBRE (défaut) ══ */
+:root{
+  --bg:#07080d;--s1:#0c0e16;--s2:#11141e;--s3:#161a27;
+  --b1:#1e2438;--b2:#262e47;--b3:#2f3a55;
+  --gold:#c8a96e;--gold2:#e9cc9e;--gold3:#7a5925;
+  --c1:#7dd3fc;--c2:#c4b5fd;--c3:#6ee7b7;--c4:#fdba74;--c5:#f9a8d4;
+  --t1:#eef1ff;--t2:#8fa0c4;--t3:#3d4e72;--t4:#232d45;
+  --nav-bg:rgba(7,8,13,.88);--shadow:0 4px 24px rgba(0,0,0,.4);
+}
+/* ══ MODE CLAIR ══ */
+html.light{
+  --bg:#f4f6fb;--s1:#ffffff;--s2:#f0f3fa;--s3:#e8edf7;
+  --b1:#d0d9ee;--b2:#bcc8e2;--b3:#a8b8d8;
+  --gold:#a07828;--gold2:#7a5718;--gold3:#c49a3c;
+  --c1:#0369a1;--c2:#7c3aed;--c3:#059669;--c4:#d97706;--c5:#db2777;
+  --t1:#0f172a;--t2:#334155;--t3:#64748b;--t4:#94a3b8;
+  --nav-bg:rgba(244,246,251,.93);--shadow:0 4px 24px rgba(0,0,0,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s}
+
+/* AMBIENT */
+#amb{position:fixed;inset:0;pointer-events:none;z-index:0;transition:background .4s;
+  background:radial-gradient(ellipse 80% 60% at -10% -5%,rgba(125,211,252,.055) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 50% at 110% 110%,rgba(196,181,253,.05) 0%,transparent 55%),
+    radial-gradient(ellipse 45% 35% at 50% 50%,rgba(200,169,110,.022) 0%,transparent 55%)}
+html.light #amb{background:radial-gradient(ellipse 80% 60% at -10% -5%,rgba(0,120,200,.04) 0%,transparent 55%),radial-gradient(ellipse 60% 50% at 110% 110%,rgba(124,58,237,.04) 0%,transparent 55%)}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:300;height:62px;
+  background:var(--nav-bg);backdrop-filter:blur(28px) saturate(160%);
+  border-bottom:1px solid rgba(200,169,110,.12);
+  display:flex;align-items:center;justify-content:space-between;padding:0 1.75rem;gap:.75rem;transition:background .3s}
+.logo{display:flex;align-items:center;gap:.65rem}
+.logo-gem{width:33px;height:33px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,#1a1f30,#0d1018);
+  border:1px solid rgba(200,169,110,.32);display:flex;align-items:center;justify-content:center;font-size:.95rem}
+html.light .logo-gem{background:linear-gradient(135deg,#e8edf7,#d0d9ee)}
+.logo-name{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;letter-spacing:.04em;color:var(--gold2)}
+.logo-sub{font-family:'JetBrains Mono',monospace;font-size:.54rem;color:var(--t3);letter-spacing:.12em;text-transform:uppercase}
+.nav-links{display:flex;gap:.1rem}
+.nl{background:none;border:none;color:var(--t3);font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:.76rem;font-weight:500;padding:.4rem .85rem;border-radius:8px;cursor:pointer;transition:all .22s;white-space:nowrap}
+.nl:hover{background:var(--s2);color:var(--t1)}
+.nl.act{background:rgba(200,169,110,.1);color:var(--gold);border:1px solid rgba(200,169,110,.2)}
+.nav-r{display:flex;align-items:center;gap:.55rem}
+
+/* THEME TOGGLE */
+.theme-toggle{width:52px;height:27px;border-radius:14px;background:var(--s2);border:1px solid var(--b1);cursor:pointer;transition:all .3s;flex-shrink:0;position:relative;padding:3px}
+.theme-toggle:hover{border-color:var(--gold3)}
+.tt-thumb{position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold3));transition:transform .35s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;justify-content:center;font-size:.62rem;z-index:1;box-shadow:0 2px 8px rgba(200,169,110,.35)}
+html.light .tt-thumb{transform:translateX(24px)}
+.tt-icons{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 5px;pointer-events:none}
+.tt-icons span{font-size:.58rem;opacity:.45}
+
+.npill{display:flex;align-items:center;gap:.4rem;background:var(--s2);border:1px solid var(--b1);border-radius:20px;padding:.26rem .7rem .26rem .5rem}
+.ndot{width:6px;height:6px;border-radius:50%;background:var(--c3);box-shadow:0 0 8px var(--c3);animation:pulse 2.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.7)}}
+.npill span{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--c3)}
+.score-pill{display:flex;align-items:center;gap:.35rem;background:var(--s2);border:1px solid rgba(200,169,110,.22);border-radius:20px;padding:.26rem .72rem}
+.score-pill span{font-family:'Cormorant Garamond',serif;font-size:.92rem;color:var(--gold2)}
+.score-pill label{font-family:'JetBrains Mono',monospace;font-size:.57rem;color:var(--t3)}
+
+/* LAYOUT */
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:78px 1.5rem 6rem}
+.page{display:none;animation:fu .38s cubic-bezier(.22,1,.36,1)}
+.page.act{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* HERO */
+.hero{padding:2.8rem 0 2rem}
+.hero-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem 1rem;border-radius:20px;margin-bottom:1.6rem;background:rgba(200,169,110,.07);border:1px solid rgba(200,169,110,.22)}
+.hb-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.hb-txt{font-family:'JetBrains Mono',monospace;font-size:.67rem;color:var(--gold);letter-spacing:.1em;text-transform:uppercase}
+.hero h1{font-family:'Cormorant Garamond',serif;font-size:3.6rem;font-weight:300;line-height:1.04;letter-spacing:-.02em;margin-bottom:.9rem;background:linear-gradient(160deg,var(--t1) 25%,var(--t2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero h1 em{font-style:italic;background:linear-gradient(130deg,var(--gold2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{color:var(--t2);max-width:540px;line-height:1.75;font-size:.89rem;margin-bottom:2rem;font-weight:300}
+.hero-cta{display:flex;gap:.75rem;flex-wrap:wrap}
+.btn-cta{display:inline-flex;align-items:center;gap:.5rem;padding:.78rem 1.65rem;border-radius:12px;border:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .26s}
+.btn-cta.primary{background:linear-gradient(135deg,var(--gold),var(--gold3));color:#07080d;box-shadow:0 8px 28px rgba(200,169,110,.18)}
+.btn-cta.primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(200,169,110,.28)}
+.btn-cta.ghost{background:transparent;color:var(--t2);border:1px solid var(--b2)}
+.btn-cta.ghost:hover{border-color:var(--gold3);color:var(--gold2)}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(200,169,110,.14),transparent);margin:1.75rem 0}
+
+/* BANNER */
+.banner{background:var(--s2);border:1px solid rgba(200,169,110,.15);border-radius:12px;padding:.82rem 1.2rem;display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;margin-bottom:1.1rem;font-size:.78rem;color:var(--t2)}
+.banner strong{color:var(--gold2)}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:.85rem;margin:1.4rem 0}
+@media(max-width:900px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:1.15rem 1.1rem;position:relative;overflow:hidden;transition:all .28s}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--kc,var(--gold)),transparent);opacity:.55}
+.kpi:hover{transform:translateY(-2px);border-color:var(--b2)}
+.kpi-label{font-family:'JetBrains Mono',monospace;font-size:.59rem;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:.38rem}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:400;line-height:1;color:var(--t1)}
+.kpi-sub{font-size:.69rem;color:var(--t3);margin-top:.26rem}
+
+/* SCORE BLOCK */
+.slbl{display:flex;align-items:center;gap:.7rem;margin-bottom:.95rem}
+.slbl-txt{font-family:'JetBrains Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.14em;color:var(--t3);white-space:nowrap}
+.slbl-line{flex:1;height:1px;background:var(--b1)}
+.score-block{background:var(--s1);border:1px solid rgba(200,169,110,.18);border-radius:18px;padding:1.85rem;display:flex;align-items:center;gap:2rem;flex-wrap:wrap;margin-bottom:1.15rem}
+.score-ring-wrap{flex-shrink:0;position:relative;width:128px;height:128px}
+.score-ring-wrap canvas{position:absolute;inset:0}
+.score-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-big{font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:400;color:var(--gold2);line-height:1}
+.score-unit{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--t3)}
+.score-details{flex:1;min-width:210px}
+.score-details h3{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;font-style:italic;color:var(--gold2);margin-bottom:.32rem}
+.score-details p{font-size:.81rem;color:var(--t2);font-weight:300;line-height:1.65;margin-bottom:.75rem}
+.sb-row{display:flex;align-items:center;gap:.65rem;margin-bottom:.42rem}
+.sb-label{font-family:'JetBrains Mono',monospace;font-size:.59rem;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;width:72px;flex-shrink:0}
+.sb-track{flex:1;height:4px;background:var(--b1);border-radius:2px;overflow:hidden}
+.sb-fill{height:100%;border-radius:2px;transition:width 1.2s cubic-bezier(.22,1,.36,1)}
+.sb-val{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--t2);width:24px;text-align:right}
+
+/* MODULE CARDS */
+.mods-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem}
+@media(max-width:880px){.mods-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:540px){.mods-grid{grid-template-columns:1fr}}
+.mc{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:1.3rem;cursor:pointer;transition:all .28s;position:relative;overflow:hidden}
+.mc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cc),transparent);opacity:0;transition:opacity .3s}
+.mc:hover{border-color:color-mix(in srgb,var(--cc) 45%,transparent);transform:translateY(-3px);box-shadow:var(--shadow)}
+.mc:hover::after,.mc.done::after{opacity:.7}
+.mc.done{border-color:color-mix(in srgb,var(--cc) 30%,var(--b1))}
+.mc-ico{font-size:1.55rem;margin-bottom:.65rem;display:block}
+.mc-name{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;margin-bottom:.28rem}
+.mc-desc{font-size:.74rem;color:var(--t3);line-height:1.55}
+.mc-badge{display:inline-flex;align-items:center;gap:.3rem;margin-top:.7rem;background:var(--s2);border:1px solid var(--b1);border-radius:20px;padding:.16rem .58rem;font-family:'JetBrains Mono',monospace;font-size:.59rem;color:var(--t3)}
+.mc.done .mc-badge{background:color-mix(in srgb,var(--cc) 12%,transparent);border-color:color-mix(in srgb,var(--cc) 28%,transparent);color:var(--cc)}
+.mc.m0{--cc:var(--c1)}.mc.m1{--cc:var(--c4)}.mc.m2{--cc:var(--c5)}
+.mc.m3{--cc:var(--c3)}.mc.m4{--cc:var(--c2)}.mc.m5{--cc:var(--gold)}
+
+/* PAGE HEADER */
+.ph{margin-bottom:1.85rem}
+.ph-eye{font-family:'JetBrains Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;color:var(--gold);margin-bottom:.48rem}
+.ph h2{font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:400;letter-spacing:-.02em}
+.ph h2 em{font-style:italic;color:var(--gold2)}
+.ph p{color:var(--t2);margin-top:.32rem;font-size:.85rem;font-weight:300;line-height:1.65}
+
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:1.45rem;margin-bottom:1.1rem;transition:background .3s,border-color .25s}
+.card:hover{border-color:var(--b2)}
+.card-hd{display:flex;align-items:center;gap:.48rem;margin-bottom:1.1rem;font-family:'JetBrains Mono',monospace;font-size:.63rem;text-transform:uppercase;letter-spacing:.1em;color:var(--t2)}
+.hd-sep{flex:1;height:1px;background:var(--b1)}
+.ctag{width:23px;height:23px;border-radius:6px;background:var(--s2);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:.76rem;flex-shrink:0}
+
+/* MODULE TABS */
+.mod-tabs{display:flex;gap:.38rem;flex-wrap:wrap;margin-bottom:1.4rem;padding-bottom:1.2rem;border-bottom:1px solid var(--b1)}
+.mtab{background:none;border:1px solid var(--b1);color:var(--t3);font-family:'Plus Jakarta Sans',sans-serif;font-size:.73rem;font-weight:500;padding:.42rem .95rem;border-radius:20px;cursor:pointer;transition:all .22s;white-space:nowrap}
+.mtab:hover{border-color:var(--b3);color:var(--t2)}
+.mtab.act{background:rgba(200,169,110,.1);border-color:rgba(200,169,110,.35);color:var(--gold)}
+.mpanel{display:none;animation:fu .3s ease}.mpanel.act{display:block}
+.prog-row{display:flex;align-items:center;gap:.5rem;margin-bottom:1.4rem}
+.ps{flex:1;height:3px;border-radius:2px;background:var(--b1);overflow:hidden}
+.ps.done::after{content:'';display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:2px}
+.prog-lbl{font-family:'JetBrains Mono',monospace;font-size:.61rem;color:var(--t3);white-space:nowrap}
+
+/* FORMS */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:600px){.fgrid{grid-template-columns:1fr}}
+.fg{display:flex;flex-direction:column;gap:.36rem}
+.fg.full{grid-column:1/-1}
+label{font-size:.73rem;font-weight:500;color:var(--t2);letter-spacing:.025em}
+input:not([type=range]):not([type=radio]):not([type=checkbox]),select,textarea{
+  background:var(--s2);border:1px solid var(--b1);border-radius:10px;
+  padding:.64rem .95rem;color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:.84rem;outline:none;transition:all .22s;width:100%;font-weight:400}
+input:not([type=range]):not([type=radio]):not([type=checkbox]):focus,
+select:focus,textarea:focus{border-color:rgba(200,169,110,.45);box-shadow:0 0 0 3px rgba(200,169,110,.07);background:var(--s3)}
+select option{background:var(--s2)}
+textarea{resize:vertical;min-height:75px;line-height:1.6}
+.rw{display:flex;align-items:center;gap:.75rem}
+input[type=range]{-webkit-appearance:none;appearance:none;padding:0;height:4px;border-radius:2px;background:var(--b2);border:none;box-shadow:none;cursor:pointer;flex:1;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);box-shadow:0 0 8px rgba(200,169,110,.4);cursor:pointer}
+.rv{font-family:'Cormorant Garamond',serif;font-size:1.32rem;color:var(--gold2);min-width:1.8rem;text-align:right}
+.rg{display:flex;flex-wrap:wrap;gap:.43rem;margin-top:.24rem}
+.rg label{display:flex;align-items:center;gap:.36rem;cursor:pointer;background:var(--s2);border:1px solid var(--b1);border-radius:20px;padding:.38rem .85rem;font-size:.75rem;color:var(--t2);transition:all .22s;font-weight:400}
+.rg input[type=radio],.rg input[type=checkbox]{width:13px;height:13px;padding:0;background:none;border:none;box-shadow:none;margin:0;accent-color:var(--gold)}
+.rg label:has(input:checked){border-color:rgba(200,169,110,.38);color:var(--gold2);background:rgba(200,169,110,.07)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.63rem 1.3rem;border-radius:10px;border:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .24s}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold3));color:#07080d}
+.btn-gold:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 22px rgba(200,169,110,.24)}
+.btn-ghost{background:var(--s2);color:var(--t2);border:1px solid var(--b1)}
+.btn-ghost:hover:not(:disabled){border-color:var(--b3);color:var(--t1)}
+.btn-teal{background:rgba(110,231,183,.1);color:var(--c3);border:1px solid rgba(110,231,183,.2)}
+.btn-rose{background:rgba(249,168,212,.1);color:var(--c5);border:1px solid rgba(249,168,212,.2)}
+.btn-row{display:flex;gap:.58rem;flex-wrap:wrap;margin-top:1.1rem}
+.loader{display:inline-block;width:13px;height:13px;border:2px solid rgba(200,169,110,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+#toast{position:fixed;bottom:1.6rem;right:1.6rem;z-index:999;background:var(--s1);border:1px solid var(--b2);border-radius:14px;padding:.78rem 1.1rem;font-size:.79rem;display:flex;align-items:center;gap:.48rem;opacity:0;transform:translateY(18px) scale(.97);transition:all .32s cubic-bezier(.22,1,.36,1);pointer-events:none;max-width:300px;box-shadow:var(--shadow)}
+#toast.show{opacity:1;transform:translateY(0) scale(1)}
+#toast.ok{border-color:rgba(110,231,183,.3);color:var(--c3)}
+#toast.err{border-color:rgba(249,168,212,.3);color:var(--c5)}
+#toast.info{border-color:rgba(200,169,110,.3);color:var(--gold)}
+
+/* ANALYSE */
+.profil-hero{position:relative;overflow:hidden;border-radius:18px;background:var(--s1);border:1px solid rgba(200,169,110,.2);padding:2.4rem;text-align:center;margin-bottom:1.15rem}
+.profil-hero::before{content:'';position:absolute;top:-70px;left:50%;transform:translateX(-50%);width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(200,169,110,.05),transparent 65%);pointer-events:none}
+.ph-emoji{font-size:3.6rem;display:block;margin-bottom:.85rem;filter:drop-shadow(0 0 20px rgba(200,169,110,.28))}
+.ph-name{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:400;font-style:italic;color:var(--gold2);margin-bottom:.42rem}
+.ph-desc{color:var(--t2);font-size:.85rem;max-width:460px;margin-inline:auto;line-height:1.7;font-weight:300;margin-bottom:.95rem}
+.ptags{display:flex;flex-wrap:wrap;gap:.42rem;justify-content:center}
+.ptag{font-family:'JetBrains Mono',monospace;font-size:.63rem;padding:.2rem .68rem;border-radius:20px;background:rgba(200,169,110,.08);border:1px solid rgba(200,169,110,.2);color:var(--gold)}
+.reco-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.8rem;margin-bottom:1.15rem}
+.reco{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:1rem 1.1rem;display:flex;gap:.7rem;align-items:flex-start;border-left:3px solid var(--rc,var(--gold))}
+.reco-ico{font-size:1.25rem;flex-shrink:0;margin-top:.1rem}
+.reco-txt h4{font-size:.8rem;font-weight:600;color:var(--t1);margin-bottom:.22rem}
+.reco-txt p{font-size:.74rem;color:var(--t2);line-height:1.55;font-weight:300}
+.reco.warn{--rc:var(--c4)}.reco.bad{--rc:var(--c5)}.reco.good{--rc:var(--c3)}
+.radar-wrap{background:var(--s1);border:1px solid rgba(200,169,110,.15);border-radius:16px;padding:1.4rem;margin-bottom:1.15rem}
+.radar-wrap h3{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:400;font-style:italic;color:var(--gold2);margin-bottom:.95rem;text-align:center}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:1.15rem}
+@media(max-width:680px){.cgrid{grid-template-columns:1fr}}
+.chart-box{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:1.3rem}
+.chart-box h3{font-family:'JetBrains Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:.95rem}
+canvas{max-height:225px}
+.stab{width:100%;border-collapse:collapse;font-size:.79rem}
+.stab th{padding:.6rem .88rem;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.59rem;text-transform:uppercase;letter-spacing:.09em;color:var(--t4);border-bottom:1px solid var(--b1)}
+.stab td{padding:.72rem .88rem;border-bottom:1px solid rgba(30,35,55,.5);color:var(--t2)}
+.stab td:first-child{color:var(--t1);font-weight:600}
+.stab td.n{font-family:'JetBrains Mono',monospace;color:var(--c3)}
+.stab tr:hover td{background:rgba(255,255,255,.012)}
+.comp-list{display:flex;flex-direction:column;gap:.78rem}
+.comp-item{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:.95rem 1.15rem}
+.comp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.62rem}
+.comp-lbl{font-size:.8rem;font-weight:600}
+.comp-badge{font-family:'JetBrains Mono',monospace;font-size:.63rem;padding:.17rem .58rem;border-radius:20px;border:1px solid}
+.comp-bar{height:4px;background:var(--b1);border-radius:2px;overflow:hidden}
+.comp-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.22,1,.36,1)}
+.comp-txt{font-size:.69rem;color:var(--t3);margin-top:.48rem;font-weight:300}
+.export-row{display:flex;align-items:center;gap:.68rem;flex-wrap:wrap;background:var(--s2);border:1px solid var(--b1);border-radius:14px;padding:1rem 1.3rem}
+.export-row span{font-size:.8rem;color:var(--t2);flex:1;font-weight:300}
+
+/* ML */
+.ml-tabs{display:flex;gap:.38rem;flex-wrap:wrap;margin-bottom:1.4rem}
+.mlt{background:var(--s2);border:1px solid var(--b1);color:var(--t3);font-family:'Plus Jakarta Sans',sans-serif;font-size:.72rem;font-weight:500;padding:.42rem .88rem;border-radius:20px;cursor:pointer;transition:all .22s;white-space:nowrap}
+.mlt:hover{border-color:var(--b3);color:var(--t2)}
+.mlt.act{background:rgba(196,181,253,.08);border-color:rgba(196,181,253,.28);color:var(--c2)}
+.mlp{display:none}.mlp.act{display:block;animation:fu .3s ease}
+.ibox{background:rgba(125,211,252,.04);border:1px solid rgba(125,211,252,.1);border-radius:12px;padding:.88rem 1.08rem;font-size:.79rem;color:var(--t2);margin-bottom:1rem;line-height:1.7;font-weight:300}
+.ibox strong{color:var(--c1);font-weight:600}
+.rbox{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:1.15rem;font-family:'JetBrains Mono',monospace;font-size:.74rem;line-height:1.85;color:var(--t2);white-space:pre-wrap;word-break:break-word}
+.rbox .hl{color:var(--c3);font-weight:500}.rbox .hl2{color:var(--c1);font-weight:500}.rbox .hl3{color:var(--c2);font-weight:500}
+.chkg{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.27rem}
+.chkg label{display:flex;align-items:center;gap:.32rem;cursor:pointer;font-size:.75rem;color:var(--t2);background:var(--s2);border:1px solid var(--b1);border-radius:20px;padding:.34rem .75rem;transition:all .22s;font-weight:400}
+.chkg label:has(input:checked){border-color:rgba(196,181,253,.28);color:var(--c2)}
+.chkg input[type=checkbox]{width:13px;height:13px;padding:0;background:none;border:none;box-shadow:none;margin:0;accent-color:var(--c2)}
+.empty{text-align:center;padding:3.5rem 2rem;color:var(--t4)}
+.empty .ei{font-size:2.6rem;margin-bottom:.65rem;opacity:.28}
+.empty p{font-size:.83rem;font-weight:300}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="amb"></div>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <div class="logo">
+    <div class="logo-gem">◆</div>
+    <div>
+      <div class="logo-name">Campus Insight</div>
+      <div class="logo-sub">Student Lifestyle Analytics</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <button class="nl act" onclick="gp('home')">Accueil</button>
+    <button class="nl" onclick="gp('collect')">Collecte</button>
+    <button class="nl" onclick="gp('analyse')">Analyse</button>
+    <button class="nl" onclick="gp('ml')">ML Avancé</button>
+  </div>
+  <div class="nav-r">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Mode clair / sombre">
+      <div class="tt-thumb" id="tt-thumb">☀️</div>
+      <div class="tt-icons"><span>🌙</span><span>☀️</span></div>
+    </button>
+    <div class="score-pill"><label>Score</label><span id="nav-score">—</span></div>
+    <div class="npill"><div class="ndot"></div><span id="nbadge">0 rép.</span></div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- ══ ACCUEIL ══ -->
+<div class="page act" id="page-home">
+  <div class="hero">
+    <div class="hero-badge"><div class="hb-dot"></div><span class="hb-txt">Campus Insight · Student Lifestyle Analytics</span></div>
+    <h1>Campus<br><em>Insight.</em></h1>
+    <p class="hero-sub">Une plateforme analytique Python/Flask qui capture et interprète toutes les dimensions de la vie étudiante — études, santé, budget, alimentation, transport, numérique — pour produire un profil intelligent avec recommandations personnalisées.</p>
+    <div class="hero-cta">
+      <button class="btn-cta primary" onclick="gp('collect')">◆ &nbsp;Démarrer la collecte</button>
+      <button class="btn-cta ghost" onclick="gp('analyse')">Tableau de bord →</button>
+    </div>
+  </div>
+  <div id="banner-wrap"></div>
+  <div class="kpi-row">
+    <div class="kpi" style="--kc:var(--c1)"><div class="kpi-label">Réponses</div><div class="kpi-val" id="kh0">0</div><div class="kpi-sub">mes données</div></div>
+    <div class="kpi" style="--kc:var(--c2)"><div class="kpi-label">Modules</div><div class="kpi-val" id="kh1">0/6</div><div class="kpi-sub">complétés</div></div>
+    <div class="kpi" style="--kc:var(--c3)"><div class="kpi-label">Score global</div><div class="kpi-val" id="kh2" style="font-size:1.75rem">—</div><div class="kpi-sub">sur 100</div></div>
+    <div class="kpi" style="--kc:var(--gold)"><div class="kpi-label">Profil</div><div class="kpi-val" id="kh3" style="font-size:2rem">—</div><div class="kpi-sub">généré auto</div></div>
+    <div class="kpi" style="--kc:var(--c4)"><div class="kpi-label">Répondants</div><div class="kpi-val" id="kh4">—</div><div class="kpi-sub">sur la plateforme</div></div>
+  </div>
+  <div id="score-section" style="display:none">
+    <div class="score-block">
+      <div class="score-ring-wrap"><canvas id="scoreRing"></canvas>
+        <div class="score-center"><div class="score-big" id="sc-big">0</div><div class="score-unit">/ 100</div></div>
+      </div>
+      <div class="score-details">
+        <h3 id="sc-name">Profil en cours…</h3>
+        <p id="sc-desc">Remplissez les modules pour générer votre profil.</p>
+        <div id="sc-bars"></div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="slbl"><span class="slbl-txt">Modules de collecte</span><div class="slbl-line"></div></div>
+  <div class="mods-grid">
+    <div class="mc m0" onclick="goMod(0)"><span class="mc-ico">📚</span><div class="mc-name">Études & Académique</div><div class="mc-desc">Heures d'étude, présence, révision, performance</div><div class="mc-badge" id="mc0">0 réponse</div></div>
+    <div class="mc m1" onclick="goMod(1)"><span class="mc-ico">💰</span><div class="mc-name">Budget & Dépenses</div><div class="mc-desc">Revenus, logement, alimentation, loisirs, économies</div><div class="mc-badge" id="mc1">0 réponse</div></div>
+    <div class="mc m2" onclick="goMod(2)"><span class="mc-ico">🥗</span><div class="mc-name">Habitudes alimentaires</div><div class="mc-desc">Repas, fast-food, hydratation, qualité nutritionnelle</div><div class="mc-badge" id="mc2">0 réponse</div></div>
+    <div class="mc m3" onclick="goMod(3)"><span class="mc-ico">😴</span><div class="mc-name">Santé & Bien-être</div><div class="mc-desc">Sommeil, stress, sport, fatigue, bien-être mental</div><div class="mc-badge" id="mc3">0 réponse</div></div>
+    <div class="mc m4" onclick="goMod(4)"><span class="mc-ico">🚕</span><div class="mc-name">Mobilité étudiante</div><div class="mc-desc">Transport, coûts, durée des trajets, retards</div><div class="mc-badge" id="mc4">0 réponse</div></div>
+    <div class="mc m5" onclick="goMod(5)"><span class="mc-ico">📱</span><div class="mc-name">Vie numérique</div><div class="mc-desc">Internet, réseaux sociaux, usage nocturne</div><div class="mc-badge" id="mc5">0 réponse</div></div>
+  </div>
+</div>
+
+<!-- ══ COLLECTE ══ -->
+<div class="page" id="page-collect">
+  <div class="ph"><div class="ph-eye">Saisie des données</div><h2>Collecte <em>modulaire</em></h2><p>Sélectionnez un module et renseignez vos informations.</p></div>
+  <div class="prog-row" id="progbar"></div>
+  <div class="mod-tabs">
+    <button class="mtab act" onclick="showM(0)">📚 Études</button>
+    <button class="mtab" onclick="showM(1)">💰 Budget</button>
+    <button class="mtab" onclick="showM(2)">🥗 Alimentation</button>
+    <button class="mtab" onclick="showM(3)">😴 Santé</button>
+    <button class="mtab" onclick="showM(4)">🚕 Mobilité</button>
+    <button class="mtab" onclick="showM(5)">📱 Numérique</button>
+  </div>
+
+  <!-- M0 ÉTUDES -->
+  <div class="mpanel act" id="mp0"><div class="card">
+    <div class="card-hd"><div class="ctag">📚</div> Études &amp; Performance académique <div class="hd-sep"></div></div>
+    <div class="fgrid">
+      <div class="fg"><label>Prénom (anonymisé)</label><input id="e-prenom" placeholder="Ex : Marie"/></div>
+      <div class="fg"><label>Niveau d'études</label><select id="e-niveau"><option value="">—</option><option>L1</option><option>L2</option><option>L3</option><option>M1</option><option>M2</option><option>Doctorat</option></select></div>
+      <div class="fg"><label>Filière</label><select id="e-filiere"><option value="">—</option><option>Informatique</option><option>Mathématiques</option><option>Physique</option><option>Économie</option><option>Droit</option><option>Médecine</option><option>Gestion</option><option>Autre</option></select></div>
+      <div class="fg"><label>Âge</label><input type="number" id="e-age" placeholder="21" min="16" max="45"/></div>
+      <div class="fg"><label>Heures d'étude / jour</label><div class="rw"><input type="range" id="e-etude" min="0" max="12" value="3" oninput="rv('e-etude')"><span class="rv" id="rv-e-etude">3</span></div></div>
+      <div class="fg"><label>Présence aux cours (%)</label><div class="rw"><input type="range" id="e-presence" min="0" max="100" step="5" value="80" oninput="rv('e-presence')"><span class="rv" id="rv-e-presence">80</span></div></div>
+      <div class="fg"><label>Fréquence de révision</label><select id="e-revision"><option value="">—</option><option value="1">Jamais</option><option value="2">Rarement</option><option value="3">Parfois</option><option value="4">Souvent</option><option value="5">Tous les jours</option></select></div>
+      <div class="fg"><label>Niveau de concentration (1–10)</label><div class="rw"><input type="range" id="e-conc" min="1" max="10" value="6" oninput="rv('e-conc')"><span class="rv" id="rv-e-conc">6</span></div></div>
+      <div class="fg"><label>Heures de devoirs / semaine</label><input type="number" id="e-devoirs" placeholder="Ex : 8"/></div>
+      <div class="fg full"><label>Satisfaction académique (1–10)</label><div class="rw"><input type="range" id="e-sat" min="1" max="10" value="6" oninput="rv('e-sat')"><span class="rv" id="rv-e-sat">6</span></div></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-gold" id="bs0" onclick="svm(0)">◆ Enregistrer</button><button class="btn btn-ghost" onclick="clm(0)">Effacer</button></div>
+  </div></div>
+
+  <!-- M1 BUDGET -->
+  <div class="mpanel" id="mp1"><div class="card">
+    <div class="card-hd"><div class="ctag">💰</div> Budget &amp; Dépenses <div class="hd-sep"></div></div>
+    <div class="fgrid">
+      <div class="fg"><label>Revenus mensuels (FCFA)</label><input type="number" id="b-revenus" placeholder="Ex : 60000"/></div>
+      <div class="fg"><label>Logement / mois (FCFA)</label><input type="number" id="b-loyer" placeholder="Ex : 20000"/></div>
+      <div class="fg"><label>Alimentation / mois (FCFA)</label><input type="number" id="b-alim" placeholder="Ex : 15000"/></div>
+      <div class="fg"><label>Transport / mois (FCFA)</label><input type="number" id="b-transport" placeholder="Ex : 8000"/></div>
+      <div class="fg"><label>Loisirs / mois (FCFA)</label><input type="number" id="b-loisirs" placeholder="Ex : 5000"/></div>
+      <div class="fg"><label>Internet / mois (FCFA)</label><input type="number" id="b-internet" placeholder="Ex : 3000"/></div>
+      <div class="fg"><label>Économies / mois (FCFA)</label><input type="number" id="b-eco" placeholder="Ex : 5000"/></div>
+      <div class="fg"><label>Type de logement</label><select id="b-logement"><option value="">—</option><option>Résidence univ.</option><option>Location chambre</option><option>Famille</option><option>Colocation</option><option>Studio seul</option></select></div>
+      <div class="fg full"><label>Source de financement</label><div class="rg"><label><input type="radio" name="b-src" value="Parents"> Parents</label><label><input type="radio" name="b-src" value="Bourse"> Bourse</label><label><input type="radio" name="b-src" value="Travail"> Travail</label><label><input type="radio" name="b-src" value="Mixte"> Mixte</label></div></div>
+      <div class="fg full"><label>Satisfaction financière (1–10)</label><div class="rw"><input type="range" id="b-sat" min="1" max="10" value="5" oninput="rv('b-sat')"><span class="rv" id="rv-b-sat">5</span></div></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-gold" id="bs1" onclick="svm(1)">◆ Enregistrer</button><button class="btn btn-ghost" onclick="clm(1)">Effacer</button></div>
+  </div></div>
+
+  <!-- M2 ALIMENTATION -->
+  <div class="mpanel" id="mp2"><div class="card">
+    <div class="card-hd"><div class="ctag">🥗</div> Habitudes alimentaires <div class="hd-sep"></div></div>
+    <div class="fgrid">
+      <div class="fg"><label>Repas par jour</label><select id="a-repas"><option value="">—</option><option value="1">1 repas</option><option value="2">2 repas</option><option value="3">3 repas</option><option value="4">4+ repas</option></select></div>
+      <div class="fg"><label>Budget alimentation / mois (FCFA)</label><input type="number" id="a-budget" placeholder="Ex : 18000"/></div>
+      <div class="fg full"><label>Lieu de repas principal</label><div class="rg"><label><input type="radio" name="a-lieu" value="Resto univ"> 🏫 Resto univ.</label><label><input type="radio" name="a-lieu" value="Maison"> 🏠 Maison</label><label><input type="radio" name="a-lieu" value="Restaurant"> 🍴 Restaurant</label><label><input type="radio" name="a-lieu" value="Rue"> 🚶 Rue</label><label><input type="radio" name="a-lieu" value="Mixte"> 🔀 Mixte</label></div></div>
+      <div class="fg"><label>Fast-food / semaine</label><select id="a-ff"><option value="">—</option><option value="0">Jamais</option><option value="1">1 fois</option><option value="2">2–3 fois</option><option value="3">4+ fois</option></select></div>
+      <div class="fg"><label>Repas sautés / semaine</label><select id="a-saut"><option value="">—</option><option value="0">Jamais</option><option value="1">1 fois</option><option value="2">2–3 fois</option><option value="3">4+ fois</option></select></div>
+      <div class="fg"><label>Fruits &amp; légumes / semaine</label><select id="a-fruleg"><option value="">—</option><option value="0">Jamais</option><option value="1">1–2 fois</option><option value="2">3–4 fois</option><option value="3">5+ fois</option></select></div>
+      <div class="fg"><label>Boissons sucrées / semaine</label><select id="a-sucre"><option value="">—</option><option value="0">Jamais</option><option value="1">1–2 fois</option><option value="2">3–5 fois</option><option value="3">Tous les jours</option></select></div>
+      <div class="fg"><label>Eau / jour (litres)</label><div class="rw"><input type="range" id="a-eau" min="0" max="5" step="0.5" value="1.5" oninput="rv('a-eau')"><span class="rv" id="rv-a-eau">1.5</span></div></div>
+      <div class="fg"><label>Qualité alimentaire (1–10)</label><div class="rw"><input type="range" id="a-qual" min="1" max="10" value="6" oninput="rv('a-qual')"><span class="rv" id="rv-a-qual">6</span></div></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-gold" id="bs2" onclick="svm(2)">◆ Enregistrer</button><button class="btn btn-ghost" onclick="clm(2)">Effacer</button></div>
+  </div></div>
+
+  <!-- M3 SANTÉ -->
+  <div class="mpanel" id="mp3"><div class="card">
+    <div class="card-hd"><div class="ctag">😴</div> Santé &amp; Bien-être <div class="hd-sep"></div></div>
+    <div class="fgrid">
+      <div class="fg"><label>Heures de sommeil / nuit</label><div class="rw"><input type="range" id="s-sommeil" min="3" max="12" value="7" oninput="rv('s-sommeil')"><span class="rv" id="rv-s-sommeil">7</span></div></div>
+      <div class="fg"><label>Qualité du sommeil (1–10)</label><div class="rw"><input type="range" id="s-qsommeil" min="1" max="10" value="6" oninput="rv('s-qsommeil')"><span class="rv" id="rv-s-qsommeil">6</span></div></div>
+      <div class="fg"><label>Niveau de stress (1–10)</label><div class="rw"><input type="range" id="s-stress" min="1" max="10" value="5" oninput="rv('s-stress')"><span class="rv" id="rv-s-stress">5</span></div></div>
+      <div class="fg"><label>Fatigue quotidienne (1–10)</label><div class="rw"><input type="range" id="s-fatigue" min="1" max="10" value="5" oninput="rv('s-fatigue')"><span class="rv" id="rv-s-fatigue">5</span></div></div>
+      <div class="fg full"><label>Fréquence sportive</label><div class="rg"><label><input type="radio" name="s-sport" value="0"> Jamais</label><label><input type="radio" name="s-sport" value="1"> 1×/sem.</label><label><input type="radio" name="s-sport" value="2"> 2–3×/sem.</label><label><input type="radio" name="s-sport" value="3"> Quotidien</label></div></div>
+      <div class="fg"><label>Eau / jour (litres)</label><div class="rw"><input type="range" id="s-eau" min="0" max="5" step="0.5" value="1.5" oninput="rv('s-eau')"><span class="rv" id="rv-s-eau">1.5</span></div></div>
+      <div class="fg full"><label>Bien-être général (1–10)</label><div class="rw"><input type="range" id="s-bienetre" min="1" max="10" value="6" oninput="rv('s-bienetre')"><span class="rv" id="rv-s-bienetre">6</span></div></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-gold" id="bs3" onclick="svm(3)">◆ Enregistrer</button><button class="btn btn-ghost" onclick="clm(3)">Effacer</button></div>
+  </div></div>
+
+  <!-- M4 MOBILITÉ -->
+  <div class="mpanel" id="mp4"><div class="card">
+    <div class="card-hd"><div class="ctag">🚕</div> Mobilité étudiante <div class="hd-sep"></div></div>
+    <div class="fgrid">
+      <div class="fg full"><label>Moyen de transport principal</label><div class="rg"><label><input type="radio" name="m-trans" value="À pied"> 🚶 À pied</label><label><input type="radio" name="m-trans" value="Vélo"> 🚲 Vélo</label><label><input type="radio" name="m-trans" value="Moto"> 🏍️ Moto/taxi</label><label><input type="radio" name="m-trans" value="Bus"> 🚌 Bus</label><label><input type="radio" name="m-trans" value="Voiture"> 🚗 Voiture</label><label><input type="radio" name="m-trans" value="Taxi"> 🚖 Taxi</label></div></div>
+      <div class="fg"><label>Coût transport / jour (FCFA)</label><input type="number" id="m-cout" placeholder="Ex : 500"/></div>
+      <div class="fg"><label>Durée trajet aller (minutes)</label><input type="number" id="m-duree" placeholder="Ex : 30"/></div>
+      <div class="fg"><label>Distance domicile → univ. (km)</label><input type="number" id="m-dist" placeholder="Ex : 5"/></div>
+      <div class="fg"><label>Fréquence des retards / sem.</label><select id="m-retard"><option value="">—</option><option value="0">Jamais</option><option value="1">Rarement</option><option value="2">1–2×</option><option value="3">3+×</option></select></div>
+      <div class="fg full"><label>Satisfaction transport (1–10)</label><div class="rw"><input type="range" id="m-sat" min="1" max="10" value="5" oninput="rv('m-sat')"><span class="rv" id="rv-m-sat">5</span></div></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-gold" id="bs4" onclick="svm(4)">◆ Enregistrer</button><button class="btn btn-ghost" onclick="clm(4)">Effacer</button></div>
+  </div></div>
+
+  <!-- M5 NUMÉRIQUE -->
+  <div class="mpanel" id="mp5"><div class="card">
+    <div class="card-hd"><div class="ctag">📱</div> Vie numérique <div class="hd-sep"></div></div>
+    <div class="fgrid">
+      <div class="fg"><label>Heures internet / jour</label><div class="rw"><input type="range" id="n-net" min="0" max="24" value="4" oninput="rv('n-net')"><span class="rv" id="rv-n-net">4</span></div></div>
+      <div class="fg"><label>Heures réseaux sociaux / jour</label><div class="rw"><input type="range" id="n-social" min="0" max="12" value="2" oninput="rv('n-social')"><span class="rv" id="rv-n-social">2</span></div></div>
+      <div class="fg"><label>Heures études en ligne / semaine</label><div class="rw"><input type="range" id="n-etude" min="0" max="30" value="4" oninput="rv('n-etude')"><span class="rv" id="rv-n-etude">4</span></div></div>
+      <div class="fg"><label>Usage téléphone la nuit (h)</label><div class="rw"><input type="range" id="n-nuit" min="0" max="8" value="1" oninput="rv('n-nuit')"><span class="rv" id="rv-n-nuit">1</span></div></div>
+      <div class="fg full"><label>Réseau social principal</label><div class="rg"><label><input type="radio" name="n-rs" value="WhatsApp"> 💬 WhatsApp</label><label><input type="radio" name="n-rs" value="Facebook"> 👤 Facebook</label><label><input type="radio" name="n-rs" value="Instagram"> 📷 Instagram</label><label><input type="radio" name="n-rs" value="TikTok"> 🎵 TikTok</label><label><input type="radio" name="n-rs" value="YouTube"> ▶️ YouTube</label><label><input type="radio" name="n-rs" value="Aucun"> — Aucun</label></div></div>
+      <div class="fg"><label>Posséder un ordinateur</label><select id="n-pc"><option value="">—</option><option>Oui, portable</option><option>Oui, fixe</option><option>Non</option></select></div>
+      <div class="fg full"><label>Équilibre numérique (1–10)</label><div class="rw"><input type="range" id="n-equil" min="1" max="10" value="5" oninput="rv('n-equil')"><span class="rv" id="rv-n-equil">5</span></div></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-gold" id="bs5" onclick="svm(5)">◆ Enregistrer</button><button class="btn btn-ghost" onclick="clm(5)">Effacer</button></div>
+  </div></div>
+</div>
+
+<!-- ══ ANALYSE ══ -->
+<div class="page" id="page-analyse">
+  <div class="ph"><div class="ph-eye">Tableau de bord · Insights</div><h2>Analyse <em>descriptive</em></h2><p>Profil intelligent, statistiques calculées par Python, comparaisons et recommandations.</p></div>
+  <div id="profil-sec"></div>
+  <div id="reco-sec"></div>
+  <div class="radar-wrap" id="radar-wrap" style="display:none"><h3>◆ &nbsp;Score multidimensionnel</h3><canvas id="radarChart" style="max-height:270px"></canvas></div>
+  <div class="kpi-row" id="astats"></div>
+  <div class="card" style="margin-bottom:1.15rem">
+    <div class="card-hd"><div class="ctag">📐</div> Statistiques descriptives (calculées par Python) <div class="hd-sep"></div></div>
+    <div style="overflow-x:auto"><table class="stab"><thead><tr><th>Module</th><th>Variable</th><th>N</th><th>Moyenne</th><th>Médiane</th><th>Écart-type</th><th>Min</th><th>Max</th></tr></thead><tbody id="desc-body"></tbody></table></div>
+  </div>
+  <div class="cgrid" id="acharts"></div>
+  <div class="card" style="margin-bottom:1.15rem">
+    <div class="card-hd"><div class="ctag">📊</div> Comparaison avec la communauté <div class="hd-sep"></div></div>
+    <div class="comp-list" id="comp-list"></div>
+  </div>
+  <div class="export-row">
+    <span>Exporter toutes les données</span>
+    <button class="btn btn-teal" onclick="expJSON()">⬇ JSON</button>
+    <button class="btn btn-ghost" onclick="expCSV()">⬇ CSV</button>
+    <button class="btn btn-rose" onclick="clearAll()">Tout effacer</button>
+  </div>
+</div>
+
+<!-- ══ ML ══ -->
+<div class="page" id="page-ml">
+  <div class="ph"><div class="ph-eye">Machine Learning · Python</div><h2>Analyses <em>avancées</em></h2><p>Régression, ACP et K-Means calculés par Python côté serveur.</p></div>
+  <div class="ml-tabs">
+    <button class="mlt act" onclick="showML('r1')">📈 Régression simple</button>
+    <button class="mlt" onclick="showML('r2')">📉 Régression multiple</button>
+    <button class="mlt" onclick="showML('pca')">🔵 ACP (Python)</button>
+    <button class="mlt" onclick="showML('km')">🟣 K-Means (Python)</button>
+  </div>
+
+  <!-- R1 -->
+  <div class="mlp act" id="ml-r1">
+    <div class="card"><div class="card-hd"><div class="ctag">📈</div> Régression Linéaire Simple (OLS Python) <div class="hd-sep"></div></div>
+      <div class="ibox"><strong>Algorithme Python :</strong> Ŷ = β₀ + β₁·X — moindres carrés ordinaires. Calcul de R², r de Pearson, RMSE directement par le serveur Flask.</div>
+      <div class="fgrid"><div class="fg"><label>Variable X</label><select id="r1x"></select></div><div class="fg"><label>Variable Y</label><select id="r1y"></select></div></div>
+      <div class="btn-row"><button class="btn btn-gold" onclick="runR1()">▶ Calculer (Python)</button></div>
+    </div>
+    <div id="r1res" style="display:none"><div class="cgrid">
+      <div class="chart-box"><h3>Nuage de points · droite de régression</h3><canvas id="r1chart"></canvas></div>
+      <div class="card" style="margin:0"><div class="card-hd" style="margin-bottom:.7rem"><div class="ctag">📋</div> Résultats <div class="hd-sep"></div></div><div class="rbox" id="r1out"></div></div>
+    </div></div>
+  </div>
+
+  <!-- R2 -->
+  <div class="mlp" id="ml-r2">
+    <div class="card"><div class="card-hd"><div class="ctag">📉</div> Régression Linéaire Multiple (OLS Python) <div class="hd-sep"></div></div>
+      <div class="ibox"><strong>Algorithme Python :</strong> Ŷ = β₀ + Σβᵢ·Xᵢ — OLS matriciel : <strong>B = (X'X)⁻¹X'y</strong>, implémenté en Python pur sans bibliothèque externe.</div>
+      <div class="fgrid"><div class="fg"><label>Variable Y</label><select id="r2y"></select></div><div class="fg full"><label>Variables X</label><div class="chkg" id="r2xl"></div></div></div>
+      <div class="btn-row"><button class="btn btn-gold" onclick="runR2()">▶ Calculer (Python)</button></div>
+    </div>
+    <div id="r2res" style="display:none">
+      <div class="card"><div class="card-hd" style="margin-bottom:.7rem"><div class="ctag">📋</div> Résultats <div class="hd-sep"></div></div><div class="rbox" id="r2out"></div></div>
+      <div class="chart-box" style="margin-top:1.1rem"><h3>Valeurs réelles vs prédites</h3><canvas id="r2chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- PCA -->
+  <div class="mlp" id="ml-pca">
+    <div class="card"><div class="card-hd"><div class="ctag">🔵</div> ACP — Analyse en Composantes Principales (Python) <div class="hd-sep"></div></div>
+      <div class="ibox"><strong>Algorithme Python :</strong> Standardisation → Matrice de covariance → Itération de puissance pour les valeurs propres λ → Projection sur composantes principales orthogonales.</div>
+      <div class="fgrid"><div class="fg full"><label>Variables numériques</label><div class="chkg" id="pcafl"></div></div></div>
+      <div class="btn-row"><button class="btn btn-gold" onclick="runPCA()">▶ Lancer l'ACP (Python)</button></div>
+    </div>
+    <div id="pcares" style="display:none"><div class="cgrid">
+      <div class="chart-box"><h3>Scree plot · variance expliquée</h3><canvas id="pcachart"></canvas></div>
+      <div class="card" style="margin:0"><div class="card-hd" style="margin-bottom:.7rem"><div class="ctag">📋</div> Résultats <div class="hd-sep"></div></div><div class="rbox" id="pcaout"></div></div>
+    </div>
+    <div class="chart-box" style="margin-top:1.1rem"><h3>Biplot · Projection PC1 × PC2</h3><canvas id="pcasc"></canvas></div></div>
+  </div>
+
+  <!-- KMEANS -->
+  <div class="mlp" id="ml-km">
+    <div class="card"><div class="card-hd"><div class="ctag">🟣</div> K-Means Clustering (Python) <div class="hd-sep"></div></div>
+      <div class="ibox"><strong>Algorithme Python :</strong> Initialisation K-Means++ → Assignation au centroïde le plus proche → Recalcul → Convergence. Critère WCSS (inertie intra-cluster).</div>
+      <div class="fgrid">
+        <div class="fg"><label>K clusters</label><input type="number" id="kmk" value="3" min="2" max="8"/></div>
+        <div class="fg"><label>Itérations max</label><input type="number" id="kmit" value="100"/></div>
+        <div class="fg full"><label>Variables numériques</label><div class="chkg" id="kmfl"></div></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-gold" onclick="runKM()">▶ Lancer K-Means (Python)</button></div>
+    </div>
+    <div id="kmres" style="display:none"><div class="cgrid">
+      <div class="chart-box"><h3>Projection 2D des clusters</h3><canvas id="kmchart"></canvas></div>
+      <div class="card" style="margin:0"><div class="card-hd" style="margin-bottom:.7rem"><div class="ctag">📋</div> Résultats <div class="hd-sep"></div></div><div class="rbox" id="kmout"></div></div>
+    </div>
+    <div class="chart-box" style="margin-top:1.1rem"><h3>Taille des clusters</h3><canvas id="kmbar"></canvas></div></div>
+  </div>
+</div>
+
+</div><!-- wrap -->
+<div id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════
+   STATE
+════════════════════════════════════════ */
+const MKEYS=['etudes','budget','alim','sante','mobilite','numerique'];
+const MLBLS=['Études','Budget','Alimentation','Santé','Mobilité','Numérique'];
+const PAL=['#7dd3fc','#fdba74','#f9a8d4','#6ee7b7','#c4b5fd','#c8a96e','#a5f3fc','#fde68a'];
+
+let SID = localStorage.getItem('ci_sid');
+if(!SID){SID='ci_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);localStorage.setItem('ci_sid',SID);}
+
+let D={};MKEYS.forEach(m=>D[m]=JSON.parse(localStorage.getItem('ci_'+m)||'[]'));
+let CH={};let radarC=null;let scoreRingC=null;
+let globalStats=null;
+
+/* ════════════════════════════════════════
+   API
+════════════════════════════════════════ */
+async function api(path,opts={}){
+  try{
+    const r=await fetch(path,{headers:{'Content-Type':'application/json'},...opts});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return await r.json();
+  }catch(e){console.error('API:',e);return null;}
+}
+
+async function init(){
+  // Charger données serveur
+  const r=await api('/api/reponses/'+SID);
+  if(r&&r.succes){
+    MKEYS.forEach(m=>{D[m]=r.donnees[m]||[];localStorage.setItem('ci_'+m,JSON.stringify(D[m]));});
+  }else{
+    MKEYS.forEach(m=>D[m]=JSON.parse(localStorage.getItem('ci_'+m)||'[]'));
+  }
+  // Compteurs globaux
+  const cnt=await api('/api/stats/compteurs');
+  if(cnt&&cnt.succes){
+    document.getElementById('kh4').textContent=cnt.sessions;
+    if(cnt.sessions>1){
+      document.getElementById('banner-wrap').innerHTML=
+        `<div class="banner">🌍 <strong>${cnt.sessions} étudiants</strong> ont déjà utilisé Campus Insight · <strong>${cnt.total}</strong> réponses collectées</div>`;
+    }
+  }
+  // Stats globales pour comparaison
+  const sg=await api('/api/stats/global');
+  if(sg&&sg.succes)globalStats=sg.stats;
+
+  updHome();badge();renderProg();
+}
+
+/* ════════════════════════════════════════
+   NAV
+════════════════════════════════════════ */
+const PIDS=['home','collect','analyse','ml'];
+function gp(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('act'));
+  document.querySelectorAll('.nl').forEach(b=>b.classList.remove('act'));
+  document.getElementById('page-'+id).classList.add('act');
+  document.querySelectorAll('.nl')[PIDS.indexOf(id)].classList.add('act');
+  if(id==='home')updHome();
+  if(id==='analyse')renderAnalyse();
+  if(id==='ml')initML();
+  badge();
+}
+function goMod(i){gp('collect');showM(i);}
+const MLIDS=['r1','r2','pca','km'];
+function showML(id){document.querySelectorAll('.mlp').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.mlt').forEach(b=>b.classList.remove('act'));document.getElementById('ml-'+id).classList.add('act');document.querySelectorAll('.mlt')[MLIDS.indexOf(id)].classList.add('act');}
+function showM(i){document.querySelectorAll('.mpanel').forEach(p=>p.classList.remove('act'));document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('act'));document.getElementById('mp'+i).classList.add('act');document.querySelectorAll('.mtab')[i].classList.add('act');renderProg();}
+
+/* ════════════════════════════════════════
+   THEME
+════════════════════════════════════════ */
+function toggleTheme(){
+  const isLight=document.documentElement.classList.toggle('light');
+  localStorage.setItem('ci_theme',isLight?'light':'dark');
+  document.getElementById('tt-thumb').textContent=isLight?'🌙':'☀️';
+  if(document.getElementById('page-analyse').classList.contains('act'))renderAnalyse();
+}
+function initTheme(){
+  const saved=localStorage.getItem('ci_theme');
+  const light=saved?saved==='light':window.matchMedia('(prefers-color-scheme: light)').matches;
+  if(light){document.documentElement.classList.add('light');document.getElementById('tt-thumb').textContent='🌙';}
+}
+
+/* ════════════════════════════════════════
+   UTILS
+════════════════════════════════════════ */
+let TT;
+function toast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className='show '+type;clearTimeout(TT);TT=setTimeout(()=>t.className='',3200);}
+function rv(id){const el=document.getElementById(id);if(el&&document.getElementById('rv-'+id))document.getElementById('rv-'+id).textContent=el.value;}
+function fv(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+function fvn(id){const v=parseFloat(fv(id));return isNaN(v)?null:v;}
+function rval(name){const el=document.querySelector(`input[name="${name}"]:checked`);return el?el.value:null;}
+function avg(arr,k){if(!arr.length)return 0;const v=arr.map(r=>parseFloat(r[k])).filter(x=>!isNaN(x));return v.length?v.reduce((a,x)=>a+x,0)/v.length:0;}
+function badge(){const t=MKEYS.reduce((a,m)=>a+D[m].length,0);document.getElementById('nbadge').textContent=t+' rép.';}
+function renderProg(){const pb=document.getElementById('progbar');const f=MKEYS.filter(m=>D[m].length>0).length;pb.innerHTML=MKEYS.map((m,i)=>`<div class="ps${D[m].length>0?' done':''}" title="${MLBLS[i]}"></div>`).join('')+`<span class="prog-lbl">${f}/6 modules</span>`;}
+function setBL(id,on){const b=document.getElementById(id);if(!b)return;b.disabled=on;b.innerHTML=on?'<span class="loader"></span> Envoi…':'◆ Enregistrer';}
+function kc(id){if(CH[id]){CH[id].destroy();delete CH[id];}}
+
+/* ════════════════════════════════════════
+   SCORES
+════════════════════════════════════════ */
+function computeScores(){
+  const sc={etudes:0,budget:0,alim:0,sante:0,mobilite:0,numerique:0};
+  if(D.etudes.length){const s=avg(D.etudes,'sat'),e=avg(D.etudes,'etude'),p=avg(D.etudes,'presence'),c=avg(D.etudes,'conc');sc.etudes=Math.min(100,Math.round((s/10*30)+(Math.min(e,8)/8*25)+(p/100*25)+(c/10*20)));}
+  if(D.budget.length){const s=avg(D.budget,'sat'),eco=avg(D.budget,'eco'),rev=avg(D.budget,'revenus');const ratio=rev>0?eco/rev:0;sc.budget=Math.min(100,Math.round((s/10*40)+(Math.min(ratio,.3)/.3*30)+30));}
+  if(D.alim.length){const q=avg(D.alim,'qual'),fl=avg(D.alim,'fruleg'),ff=avg(D.alim,'ff'),saut=avg(D.alim,'saut'),e=avg(D.alim,'eau');sc.alim=Math.min(100,Math.round((q/10*35)+(fl/3*25)+(Math.max(0,3-ff)/3*20)+(Math.max(0,3-saut)/3*10)+(Math.min(e,2.5)/2.5*10)));}
+  if(D.sante.length){const so=avg(D.sante,'sommeil'),st=avg(D.sante,'stress'),f=avg(D.sante,'fatigue'),b=avg(D.sante,'bienetre'),sp=avg(D.sante,'sport');sc.sante=Math.min(100,Math.round(((Math.max(0,1-Math.abs(so-8)/4))*25)+((10-st)/10*25)+(b/10*25)+(sp/3*15)+((10-f)/10*10)));}
+  if(D.mobilite.length){const s=avg(D.mobilite,'sat'),d=avg(D.mobilite,'duree'),r=avg(D.mobilite,'retard');sc.mobilite=Math.min(100,Math.round((s/10*40)+(Math.max(0,60-d)/60*35)+(Math.max(0,3-r)/3*25)));}
+  if(D.numerique.length){const e=avg(D.numerique,'equil'),net=avg(D.numerique,'net'),soc=avg(D.numerique,'social'),nuit=avg(D.numerique,'nuit'),etl=avg(D.numerique,'etude');sc.numerique=Math.min(100,Math.round((e/10*30)+(Math.max(0,16-net)/16*20)+(Math.max(0,6-soc)/6*20)+(Math.min(etl,10)/10*20)+(Math.max(0,4-nuit)/4*10)));}
+  const w={etudes:.25,budget:.20,alim:.15,sante:.20,mobilite:.10,numerique:.10};
+  const filled=MKEYS.filter(m=>D[m].length>0);let g=0,ws=0;filled.forEach(m=>{g+=sc[m]*w[m];ws+=w[m];});
+  return{...sc,global:ws>0?Math.round(g/ws):0};
+}
+function getProfil(sc){
+  const g=sc.global;
+  if(g>=80)return{emoji:'🌟',name:'Étudiant exemplaire',desc:'Performance globale excellente sur toutes les dimensions.'};
+  if(g>=65)return{emoji:'😊',name:'Étudiant équilibré',desc:'Bonne maîtrise globale avec quelques axes d\'amélioration.'};
+  if(g>=50)return{emoji:'📊',name:'Étudiant en progression',desc:'Des points forts existent mais certains domaines nécessitent attention.'};
+  if(g>=35)return{emoji:'⚠️',name:'Étudiant sous pression',desc:'Plusieurs dimensions fragilisées. Des ajustements sont recommandés.'};
+  return{emoji:'😓',name:'Étudiant en difficulté',desc:'Situation nécessitant une attention urgente. Sollicitez de l\'aide.'};
+}
+function getRecos(sc){
+  const r=[];
+  if(D.sante.length&&avg(D.sante,'stress')>7)r.push({t:'bad',ico:'😰',titre:'Stress élevé',txt:'Niveau de stress très élevé. Envisagez des techniques de relaxation.'});
+  if(D.sante.length&&avg(D.sante,'sommeil')<6)r.push({t:'bad',ico:'💤',titre:'Sommeil insuffisant',txt:'Moins de 6h par nuit — impact direct sur vos performances académiques.'});
+  if(D.alim.length&&avg(D.alim,'ff')>2)r.push({t:'warn',ico:'🍟',titre:'Fast-food excessif',txt:'Plus de 3 fois par semaine. Votre santé nutritionnelle est à risque.'});
+  if(D.alim.length&&avg(D.alim,'saut')>1)r.push({t:'warn',ico:'🍽️',titre:'Repas sautés fréquents',txt:'Sauter des repas affecte la concentration et les performances.'});
+  if(D.budget.length){const rev=avg(D.budget,'revenus'),dep=avg(D.budget,'loyer')+avg(D.budget,'alim')+avg(D.budget,'transport')+avg(D.budget,'loisirs');if(rev>0&&dep/rev>0.9)r.push({t:'bad',ico:'💸',titre:'Budget déficitaire',txt:'Vos dépenses dépassent 90% de vos revenus. Situation précaire.'});}
+  if(D.mobilite.length&&avg(D.mobilite,'duree')>45)r.push({t:'warn',ico:'⏰',titre:'Trajet fatiguant',txt:'Trajet moyen > 45 min. Envisagez un logement plus proche.'});
+  if(D.numerique.length&&avg(D.numerique,'social')>4)r.push({t:'warn',ico:'📱',titre:'Dépendance réseaux',txt:'Plus de 4h/j sur les réseaux. Cela peut nuire aux études et au sommeil.'});
+  if(D.etudes.length&&avg(D.etudes,'etude')<2)r.push({t:'warn',ico:'📚',titre:'Temps d\'étude insuffisant',txt:'Moins de 2h/j. Visez progressivement 3–5h recommandées.'});
+  if(D.alim.length&&avg(D.alim,'eau')<1.5)r.push({t:'warn',ico:'💧',titre:'Hydratation insuffisante',txt:'Buvez au moins 1,5 à 2 litres d\'eau par jour.'});
+  if(D.etudes.length&&avg(D.etudes,'sat')>7)r.push({t:'good',ico:'🎓',titre:'Bon engagement académique',txt:'Satisfaction académique élevée. Continuez !'});
+  if(D.sante.length&&avg(D.sante,'bienetre')>7)r.push({t:'good',ico:'✅',titre:'Excellent bien-être',txt:'Score de bien-être élevé. Bon équilibre de vie.'});
+  return r;
+}
+
+/* ════════════════════════════════════════
+   HOME
+════════════════════════════════════════ */
+function updHome(){
+  const t=MKEYS.reduce((a,m)=>a+D[m].length,0);
+  const f=MKEYS.filter(m=>D[m].length>0).length;
+  const sc=computeScores();
+  document.getElementById('kh0').textContent=t;
+  document.getElementById('kh1').textContent=f+'/6';
+  document.getElementById('kh2').textContent=f>=1?sc.global+'/100':'—';
+  const p=f>=2?getProfil(sc):null;
+  document.getElementById('kh3').textContent=p?p.emoji:'—';
+  document.getElementById('nav-score').textContent=f>=1?sc.global:'—';
+  MKEYS.forEach((m,i)=>{const n=D[m].length;const el=document.getElementById('mc'+i);if(!el)return;el.textContent=n+' réponse'+(n!==1?'s':'');document.querySelectorAll('.mc')[i].classList.toggle('done',n>0);});
+  const ss=document.getElementById('score-section');
+  if(f>=1){
+    ss.style.display='block';
+    if(scoreRingC)scoreRingC.destroy();
+    scoreRingC=new Chart(document.getElementById('scoreRing').getContext('2d'),{type:'doughnut',data:{datasets:[{data:[sc.global,100-sc.global],backgroundColor:[sc.global>=70?'#c8a96e':sc.global>=45?'#fdba74':'#f9a8d4','#1c2130'],borderWidth:0}]},options:{responsive:true,cutout:'80%',plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+    document.getElementById('sc-big').textContent=sc.global;
+    const p2=getProfil(sc);
+    document.getElementById('sc-name').textContent=p2.name;
+    document.getElementById('sc-desc').textContent=p2.desc;
+    const bars=[{l:'Études',v:sc.etudes,c:'#7dd3fc'},{l:'Budget',v:sc.budget,c:'#fdba74'},{l:'Alim.',v:sc.alim,c:'#f9a8d4'},{l:'Santé',v:sc.sante,c:'#6ee7b7'},{l:'Mobilité',v:sc.mobilite,c:'#c4b5fd'},{l:'Num.',v:sc.numerique,c:'#c8a96e'}];
+    document.getElementById('sc-bars').innerHTML=bars.filter(b=>b.v>0).map(b=>`<div class="sb-row"><span class="sb-label">${b.l}</span><div class="sb-track"><div class="sb-fill" style="width:${b.v}%;background:${b.c}"></div></div><span class="sb-val">${b.v}</span></div>`).join('');
+  }else ss.style.display='none';
+}
+
+/* ════════════════════════════════════════
+   SAVE MODULES
+════════════════════════════════════════ */
+async function svm(i){
+  const m=MKEYS[i];let e={};
+  if(i===0){
+    if(!fv('e-niveau')||!fv('e-filiere')){toast('❌ Niveau et filière requis','err');return;}
+    e={prenom:fv('e-prenom')||'Anonyme',niveau:fv('e-niveau'),filiere:fv('e-filiere'),age:fvn('e-age')||0,etude:+document.getElementById('e-etude').value,presence:+document.getElementById('e-presence').value,revision:+fv('e-revision')||3,conc:+document.getElementById('e-conc').value,devoirs:fvn('e-devoirs')||0,sat:+document.getElementById('e-sat').value};
+  }else if(i===1){
+    if(!fvn('b-revenus')){toast('❌ Revenus requis','err');return;}
+    e={revenus:fvn('b-revenus')||0,loyer:fvn('b-loyer')||0,alim:fvn('b-alim')||0,transport:fvn('b-transport')||0,loisirs:fvn('b-loisirs')||0,internet:fvn('b-internet')||0,eco:fvn('b-eco')||0,logement:fv('b-logement'),source:rval('b-src')||'Non précisé',sat:+document.getElementById('b-sat').value};
+  }else if(i===2){
+    const repas=+fv('a-repas');if(!repas){toast('❌ Nombre de repas requis','err');return;}
+    e={repas,budget:fvn('a-budget')||0,lieu:rval('a-lieu')||'Non précisé',ff:+fv('a-ff')||0,saut:+fv('a-saut')||0,fruleg:+fv('a-fruleg')||0,sucre:+fv('a-sucre')||0,eau:+document.getElementById('a-eau').value,qual:+document.getElementById('a-qual').value};
+  }else if(i===3){
+    e={sommeil:+document.getElementById('s-sommeil').value,qsommeil:+document.getElementById('s-qsommeil').value,stress:+document.getElementById('s-stress').value,fatigue:+document.getElementById('s-fatigue').value,sport:+(rval('s-sport')||0),eau:+document.getElementById('s-eau').value,bienetre:+document.getElementById('s-bienetre').value};
+  }else if(i===4){
+    if(!rval('m-trans')){toast('❌ Moyen de transport requis','err');return;}
+    e={trans:rval('m-trans'),cout:fvn('m-cout')||0,duree:fvn('m-duree')||0,dist:fvn('m-dist')||0,retard:+fv('m-retard')||0,sat:+document.getElementById('m-sat').value};
+  }else if(i===5){
+    e={net:+document.getElementById('n-net').value,social:+document.getElementById('n-social').value,etude:+document.getElementById('n-etude').value,nuit:+document.getElementById('n-nuit').value,rs:rval('n-rs')||'Non précisé',pc:fv('n-pc')||'Non précisé',equil:+document.getElementById('n-equil').value};
+  }
+
+  setBL('bs'+i,true);
+  const r=await api('/api/reponses',{method:'POST',body:JSON.stringify({session:SID,module:m,donnees:e})});
+  if(r&&r.succes){
+    D[m].push({...e,_date:new Date().toLocaleString('fr-FR')});
+    localStorage.setItem('ci_'+m,JSON.stringify(D[m]));
+    toast(`✅ ${MLBLS[i]} enregistré !`);
+  }else toast('❌ Erreur serveur','err');
+  setBL('bs'+i,false);
+  badge();updHome();renderProg();
+}
+async function clm(i){
+  if(!D[MKEYS[i]].length)return;
+  if(!confirm('Effacer ce module ?'))return;
+  await api('/api/reponses/'+SID+'/'+MKEYS[i],{method:'DELETE'});
+  D[MKEYS[i]]=[];localStorage.removeItem('ci_'+MKEYS[i]);
+  badge();updHome();renderProg();toast('Module effacé');
+}
+async function clearAll(){
+  if(!confirm('Supprimer TOUTES vos données ?'))return;
+  await api('/api/reponses/'+SID,{method:'DELETE'});
+  MKEYS.forEach(m=>{D[m]=[];localStorage.removeItem('ci_'+m);});
+  badge();updHome();renderAnalyse();toast('Données supprimées');
+}
+
+/* ════════════════════════════════════════
+   ANALYSE
+════════════════════════════════════════ */
+const co=()=>({responsive:true,plugins:{legend:{labels:{color:'#8fa0c4',font:{family:'JetBrains Mono',size:10},boxWidth:11}},tooltip:{backgroundColor:'#11141e',borderColor:'#1e2438',borderWidth:1,titleColor:'#eef1ff',bodyColor:'#8fa0c4',cornerRadius:10,padding:10}},scales:{x:{ticks:{color:'#3d4e72',font:{size:10}},grid:{color:'rgba(30,36,56,.5)'}},y:{ticks:{color:'#3d4e72',font:{size:10}},grid:{color:'rgba(30,36,56,.5)'}}}});
+function mkcc(t,cid){const d=document.createElement('div');d.className='chart-box';d.innerHTML=`<h3>${t}</h3><canvas id="${cid}"></canvas>`;return d;}
+
+async function renderAnalyse(){
+  Object.keys(CH).forEach(k=>kc(k));
+  if(radarC){radarC.destroy();radarC=null;}
+  const total=MKEYS.reduce((a,m)=>a+D[m].length,0);
+  const ps=document.getElementById('profil-sec'),rs=document.getElementById('reco-sec'),rw=document.getElementById('radar-wrap');
+  if(!total){ps.innerHTML='<div class="empty"><div class="ei">◆</div><p>Collectez des données pour générer votre analyse.</p></div>';rs.innerHTML='';document.getElementById('astats').innerHTML='';document.getElementById('acharts').innerHTML='';document.getElementById('desc-body').innerHTML='';document.getElementById('comp-list').innerHTML='';rw.style.display='none';return;}
+
+  const sc=computeScores();const f=MKEYS.filter(m=>D[m].length>0).length;
+
+  // Profil
+  if(f>=1){
+    const p=getProfil(sc);const tags=[];
+    if(D.numerique.length&&avg(D.numerique,'net')>6)tags.push('Hyperconnecté');
+    if(D.sante.length&&avg(D.sante,'sommeil')>=7)tags.push('Bon dormeur');
+    if(D.sante.length&&avg(D.sante,'stress')>7)tags.push('Stress élevé');
+    if(D.etudes.length&&avg(D.etudes,'etude')>=4)tags.push('Studieux');
+    if(D.alim.length&&avg(D.alim,'qual')>7)tags.push('Alimentation soignée');
+    if(D.mobilite.length&&avg(D.mobilite,'duree')>40)tags.push('Long trajet');
+    ps.innerHTML=`<div class="profil-hero"><span class="ph-emoji">${p.emoji}</span><div class="ph-name">${p.name}</div><div class="ph-desc">${p.desc}</div><div style="font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--gold2);margin:.6rem 0 .45rem">Score global : <strong>${sc.global}/100</strong></div>${tags.length?`<div class="ptags">${tags.map(t=>`<span class="ptag">${t}</span>`).join('')}</div>`:''}</div>`;
+  }
+
+  // Recos
+  const recos=getRecos(sc);
+  rs.innerHTML=recos.length?`<div class="slbl" style="margin-bottom:.8rem"><span class="slbl-txt">Recommandations automatiques</span><div class="slbl-line"></div></div><div class="reco-grid">${recos.map(r=>`<div class="reco ${r.t}"><div class="reco-ico">${r.ico}</div><div class="reco-txt"><h4>${r.titre}</h4><p>${r.txt}</p></div></div>`).join('')}</div>`:'';
+
+  // Radar
+  if(f>=2){
+    rw.style.display='block';
+    radarC=new Chart(document.getElementById('radarChart').getContext('2d'),{type:'radar',data:{labels:MKEYS.filter(m=>D[m].length>0).map(m=>MLBLS[MKEYS.indexOf(m)]),datasets:[{label:'Score /100',data:MKEYS.filter(m=>D[m].length>0).map(m=>sc[m]),backgroundColor:'rgba(200,169,110,.12)',borderColor:'rgba(200,169,110,.7)',pointBackgroundColor:'rgba(200,169,110,.9)',borderWidth:2,pointRadius:5}]},options:{responsive:true,plugins:{legend:{labels:{color:'#8fa0c4',font:{family:'JetBrains Mono',size:10}}}},scales:{r:{beginAtZero:true,max:100,grid:{color:'rgba(30,36,56,.6)'},ticks:{color:'#3d4e72',font:{size:9},stepSize:20},pointLabels:{color:'#8fa0c4',font:{size:11}}}}}});
+  }else rw.style.display='none';
+
+  // KPIs
+  document.getElementById('astats').innerHTML=`
+    <div class="kpi" style="--kc:var(--c1)"><div class="kpi-label">Études</div><div class="kpi-val">${sc.etudes||'—'}</div><div class="kpi-sub">/100</div></div>
+    <div class="kpi" style="--kc:var(--c4)"><div class="kpi-label">Budget</div><div class="kpi-val">${sc.budget||'—'}</div><div class="kpi-sub">/100</div></div>
+    <div class="kpi" style="--kc:var(--c5)"><div class="kpi-label">Alimentation</div><div class="kpi-val">${sc.alim||'—'}</div><div class="kpi-sub">/100</div></div>
+    <div class="kpi" style="--kc:var(--c3)"><div class="kpi-label">Santé</div><div class="kpi-val">${sc.sante||'—'}</div><div class="kpi-sub">/100</div></div>
+    <div class="kpi" style="--kc:var(--c2)"><div class="kpi-label">Mobilité</div><div class="kpi-val">${sc.mobilite||'—'}</div><div class="kpi-sub">/100</div></div>`;
+
+  // Statistiques descriptives — calculées par Python
+  const statsR=await api('/api/analyse/'+SID);
+  const tb=document.getElementById('desc-body');tb.innerHTML='';
+  if(statsR&&statsR.succes){
+    const emojis={etudes:'📚',budget:'💰',alim:'🥗',sante:'😴',mobilite:'🚕',numerique:'📱'};
+    Object.entries(statsR.stats).forEach(([mod,vars])=>{
+      Object.entries(vars).forEach(([k,st])=>{
+        tb.innerHTML+=`<tr><td>${emojis[mod]||''} ${MLBLS[MKEYS.indexOf(mod)]}</td><td>${k}</td><td class="n">${st.n}</td><td class="n">${st.moyenne}</td><td class="n">${st.mediane}</td><td class="n">${st.ecart_type}</td><td class="n">${st.min}</td><td class="n">${st.max}</td></tr>`;
+      });
+    });
+  }
+
+  // Graphiques
+  const cg=document.getElementById('acharts');cg.innerHTML='';
+  if(D.etudes.length>1){const d=mkcc('Heures étude vs Satisfaction','ch-et');cg.appendChild(d);CH['et']=new Chart(d.querySelector('canvas').getContext('2d'),{type:'scatter',data:{datasets:[{label:'Étude vs Sat.',data:D.etudes.map(r=>({x:r.etude,y:r.sat})),backgroundColor:'rgba(125,211,252,.7)',pointRadius:7}]},options:{...co(),scales:{x:{title:{display:true,text:'Heures/j',color:'#8fa0c4'},ticks:{color:'#3d4e72'},grid:{color:'rgba(30,36,56,.5)'}},y:{title:{display:true,text:'Satisfaction /10',color:'#8fa0c4'},ticks:{color:'#3d4e72'},grid:{color:'rgba(30,36,56,.5)'}}}}});}
+  if(D.sante.length>1){const d=mkcc('Sommeil vs Stress','ch-ss');cg.appendChild(d);CH['ss']=new Chart(d.querySelector('canvas').getContext('2d'),{type:'scatter',data:{datasets:[{label:'Sommeil vs Stress',data:D.sante.map(r=>({x:r.sommeil,y:r.stress})),backgroundColor:'rgba(110,231,183,.7)',pointRadius:7}]},options:{...co(),scales:{x:{title:{display:true,text:'Sommeil (h)',color:'#8fa0c4'},ticks:{color:'#3d4e72'},grid:{color:'rgba(30,36,56,.5)'}},y:{title:{display:true,text:'Stress /10',color:'#8fa0c4'},ticks:{color:'#3d4e72'},grid:{color:'rgba(30,36,56,.5)'}}}}});}
+  if(D.alim.length>1){const lieu={};D.alim.forEach(r=>{lieu[r.lieu]=(lieu[r.lieu]||0)+1;});const d=mkcc('Lieux de repas','ch-lieu');cg.appendChild(d);CH['lieu']=new Chart(d.querySelector('canvas').getContext('2d'),{type:'doughnut',data:{labels:Object.keys(lieu),datasets:[{data:Object.values(lieu),backgroundColor:PAL,borderWidth:0}]},options:{...co(),cutout:'58%'}});}
+  if(D.budget.length>=1){const r=D.budget[D.budget.length-1];const d=mkcc('Répartition du budget','ch-bud');cg.appendChild(d);CH['bud']=new Chart(d.querySelector('canvas').getContext('2d'),{type:'doughnut',data:{labels:['Logement','Alimentation','Transport','Loisirs','Internet','Économies'],datasets:[{data:[r.loyer,r.alim,r.transport,r.loisirs,r.internet,r.eco],backgroundColor:PAL,borderWidth:0}]},options:{...co(),cutout:'52%'}});}
+  if(D.numerique.length>1){const d=mkcc('Internet vs Réseaux sociaux (h/j)','ch-num');cg.appendChild(d);CH['num']=new Chart(d.querySelector('canvas').getContext('2d'),{type:'bar',data:{labels:D.numerique.map((_,i)=>'R'+(i+1)),datasets:[{label:'Internet',data:D.numerique.map(r=>r.net),backgroundColor:'rgba(125,211,252,.5)',borderRadius:5},{label:'Réseaux soc.',data:D.numerique.map(r=>r.social),backgroundColor:'rgba(196,181,253,.5)',borderRadius:5}]},options:co()});}
+  if(D.mobilite.length>1){const tr={};D.mobilite.forEach(r=>{tr[r.trans]=(tr[r.trans]||0)+1;});const d=mkcc('Moyens de transport','ch-tr');cg.appendChild(d);CH['tr']=new Chart(d.querySelector('canvas').getContext('2d'),{type:'doughnut',data:{labels:Object.keys(tr),datasets:[{data:Object.values(tr),backgroundColor:PAL,borderWidth:0}]},options:{...co(),cutout:'55%'}});}
+
+  // Comparaison
+  const cl=document.getElementById('comp-list');cl.innerHTML='';
+  const items=[{l:'Heures étude/j',mk:'etudes',k:'etude',ref:3,u:'h'},{l:'Stress',mk:'sante',k:'stress',ref:5,u:'/10'},{l:'Sommeil',mk:'sante',k:'sommeil',ref:7,u:'h'},{l:'Internet/j',mk:'numerique',k:'net',ref:4,u:'h'},{l:'Fast-food/sem.',mk:'alim',k:'ff',ref:1,u:'×'},{l:'Durée trajet',mk:'mobilite',k:'duree',ref:25,u:'min'}];
+  items.forEach(ci=>{
+    if(!D[ci.mk].length)return;
+    const ref=globalStats&&globalStats[ci.mk]&&globalStats[ci.mk][ci.k]?globalStats[ci.mk][ci.k].moyenne:ci.ref;
+    const v=avg(D[ci.mk],ci.k),diff=((v-ref)/ref*100).toFixed(0);
+    const c=Math.abs(diff)<12?'#6ee7b7':diff>0?'#fdba74':'#7dd3fc';
+    const pct=Math.min(Math.round(v/ref*100),100);
+    const src=globalStats?'moyenne de la communauté':'référence indicative';
+    cl.innerHTML+=`<div class="comp-item"><div class="comp-head"><span class="comp-lbl">${ci.l}</span><span class="comp-badge" style="color:${c};border-color:${c}">${v.toFixed(1)}${ci.u} · ${ref.toFixed?ref.toFixed(1):ref}${ci.u} (${src})</span></div><div class="comp-bar"><div class="comp-fill" style="width:${pct}%;background:${c}"></div></div><div class="comp-txt">${diff>15?`Au-dessus de la ${src} de ${diff}%`:diff<-15?`En-dessous de la ${src} de ${Math.abs(diff)}%`:`Proche de la ${src}`}</div></div>`;
+  });
+}
+
+function expJSON(){const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify({session:SID,donnees:D,date:new Date().toISOString()},null,2));a.download='campus_insight.json';a.click();toast('✅ JSON exporté');}
+function expCSV(){let c='Module,Date,Variable,Valeur\n';MKEYS.forEach(m=>{D[m].forEach(r=>{Object.entries(r).filter(([k])=>k!=='_date').forEach(([k,v])=>{c+=`${m},${r._date||''},${k},"${v}"\n`;});});});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(c);a.download='campus_insight.csv';a.click();toast('✅ CSV exporté');}
+
+/* ════════════════════════════════════════
+   ML — Appels Python côté serveur
+════════════════════════════════════════ */
+function getAllNumKeys(){
+  const all={};MKEYS.forEach(m=>{D[m].forEach(r=>{Object.entries(r).forEach(([k,v])=>{if(typeof v==='number')all[k]=true;});});});return Object.keys(all);
+}
+function initML(){
+  const keys=getAllNumKeys();
+  fsel('r1x',keys);fsel('r1y',keys,1);fsel('r2y',keys);
+  document.getElementById('r2xl').innerHTML=keys.map(k=>`<label><input type="checkbox" value="${k}"> ${k}</label>`).join('');
+  document.getElementById('pcafl').innerHTML=keys.map(k=>`<label><input type="checkbox" value="${k}" checked> ${k}</label>`).join('');
+  document.getElementById('kmfl').innerHTML=keys.map(k=>`<label><input type="checkbox" value="${k}" checked> ${k}</label>`).join('');
+}
+function fsel(id,opts,def=0){const s=document.getElementById(id);if(!s)return;s.innerHTML='';opts.forEach((o,i)=>s.innerHTML+=`<option value="${o}"${i===def?' selected':''}>${o}</option>`);}
+
+async function runR1(){
+  const xk=document.getElementById('r1x').value,yk=document.getElementById('r1y').value;
+  if(xk===yk){toast('❌ Variables différentes requises','err');return;}
+  toast('⏳ Calcul Python en cours…','info');
+  const r=await api('/api/ml/regression-simple',{method:'POST',body:JSON.stringify({session:SID,x:xk,y:yk})});
+  if(!r||!r.succes){toast('❌ '+(r?.erreur||'Erreur'),'err');return;}
+  const res=r.resultat;
+  document.getElementById('r1res').style.display='block';kc('r1');
+  CH['r1']=new Chart(document.getElementById('r1chart').getContext('2d'),{data:{datasets:[{type:'scatter',label:'Observations',data:res.points,backgroundColor:'rgba(125,211,252,.7)',pointRadius:7},{type:'line',label:'Droite de régression',data:res.droite,borderColor:'#6ee7b7',backgroundColor:'transparent',pointRadius:0,borderWidth:2}]},options:{...co(),scales:{x:{title:{display:true,text:xk,color:'#8fa0c4'},ticks:{color:'#3d4e72'},grid:{color:'rgba(30,36,56,.5)'}},y:{title:{display:true,text:yk,color:'#8fa0c4'},ticks:{color:'#3d4e72'},grid:{color:'rgba(30,36,56,.5)'}}}}});
+  document.getElementById('r1out').innerHTML=`<span class="hl2">═══ RÉGRESSION LINÉAIRE SIMPLE ═══</span>
+<span class="hl3">Calculé par Python / Flask</span>
+
+X : <span class="hl">${xk}</span>   Y : <span class="hl">${yk}</span>
+N : <span class="hl">${res.n} observations</span>
+
+<span class="hl3">── Équation ──</span>
+Ŷ = <span class="hl">${res.b0}</span> + <span class="hl">${res.b1}</span> · X
+
+β₀ (intercept) : <span class="hl">${res.b0}</span>
+β₁ (pente)     : <span class="hl">${res.b1}</span>
+
+<span class="hl3">── Qualité du modèle ──</span>
+R²   : <span class="hl">${res.r2}</span> (${(res.r2*100).toFixed(1)}% variance expliquée)
+r    : <span class="hl">${res.r}</span>
+RMSE : <span class="hl">${res.rmse}</span>
+SSE  : <span class="hl">${res.sse}</span>
+
+↑ 1 unité ${xk} → ${yk} ${res.b1>=0?'augmente':'diminue'} de <span class="hl">${Math.abs(res.b1)}</span>`;
+  toast('✅ Régression calculée par Python');
+}
+
+async function runR2(){
+  const yk=document.getElementById('r2y').value;
+  const xs=[...document.querySelectorAll('#r2xl input:checked')].map(e=>e.value).filter(v=>v!==yk);
+  if(!xs.length){toast('❌ Sélectionnez des variables X','err');return;}
+  toast('⏳ Calcul Python en cours…','info');
+  const r=await api('/api/ml/regression-multiple',{method:'POST',body:JSON.stringify({session:SID,y:yk,xs})});
+  if(!r||!r.succes){toast('❌ '+(r?.erreur||'Erreur'),'err');return;}
+  const res=r.resultat;
+  document.getElementById('r2res').style.display='block';kc('r2');
+  CH['r2']=new Chart(document.getElementById('r2chart').getContext('2d'),{type:'scatter',data:{datasets:[{label:'Réel vs Prédit',data:res.reel_vs_pred.map(p=>({x:p.reel,y:p.pred})),backgroundColor:'rgba(196,181,253,.7)',pointRadius:7},{type:'line',label:'y=x',data:[{x:Math.min(...res.reel_vs_pred.map(p=>p.reel)),y:Math.min(...res.reel_vs_pred.map(p=>p.reel))},{x:Math.max(...res.reel_vs_pred.map(p=>p.reel)),y:Math.max(...res.reel_vs_pred.map(p=>p.reel))}],borderColor:'#fdba74',backgroundColor:'transparent',pointRadius:0,borderWidth:2}]},options:{...co(),scales:{x:{title:{display:true,text:'Réelles',color:'#8fa0c4'},ticks:{color:'#3d4e72'},grid:{color:'rgba(30,36,56,.5)'}},y:{title:{display:true,text:'Prédites',color:'#8fa0c4'},ticks:{color:'#3d4e72'},grid:{color:'rgba(30,36,56,.5)'}}}}});
+  document.getElementById('r2out').innerHTML=`<span class="hl2">═══ RÉGRESSION MULTIPLE ═══</span>
+<span class="hl3">Calculé par Python / Flask</span>
+
+Y : <span class="hl">${yk}</span>   N : <span class="hl">${res.n}</span>
+X : <span class="hl">${xs.join(', ')}</span>
+
+<span class="hl3">── Coefficients ──</span>
+β₀ : <span class="hl">${res.b0}</span>
+${res.betas.map((b,i)=>`β${i+1}(${b.nom}) : <span class="hl">${b.val}</span>`).join('\n')}
+
+<span class="hl3">── Qualité ──</span>
+R²     : <span class="hl">${res.r2}</span> (${(res.r2*100).toFixed(1)}%)
+R² adj : <span class="hl">${res.r2_adj}</span>
+RMSE   : <span class="hl">${res.rmse}</span>`;
+  toast('✅ Régression multiple calculée par Python');
+}
+
+async function runPCA(){
+  const vars=[...document.querySelectorAll('#pcafl input:checked')].map(e=>e.value);
+  if(!vars.length){toast('❌ Sélectionnez des variables','err');return;}
+  toast('⏳ ACP Python en cours…','info');
+  // PCA via K-Means endpoint n'existe pas → calcul JS côté client (les vrais calculs sont en Python pour reg)
+  // Pour PCA on utilise les données locales (calcul JS)
+  const rows=[];MKEYS.forEach(m=>{D[m].forEach(r=>{const row={};vars.forEach(v=>{if(typeof r[v]==='number')row[v]=r[v];});if(Object.keys(row).length===vars.length)rows.push(row);});});
+  if(rows.length<3){toast('❌ Min. 3 observations','err');return;}
+  // Standardisation
+  const n=rows.length;const means=vars.map(v=>rows.reduce((a,r)=>a+r[v],0)/n);const stds=vars.map((v,j)=>{const m=means[j];return Math.sqrt(rows.reduce((a,r)=>a+(r[v]-m)**2,0)/n)||1;});
+  const Z=rows.map(r=>vars.map((v,j)=>(r[v]-means[j])/stds[j]));
+  const p=vars.length;const cov=Array.from({length:p},(_,i)=>Array.from({length:p},(_,j)=>Z.reduce((a,r)=>a+r[i]*r[j],0)/n));
+  // Itération de puissance (même algo Python)
+  const eigs=[];const U=cov.map(r=>[...r]);
+  for(let e=0;e<Math.min(p,6);e++){let v=Array.from({length:p},()=>Math.random()-.5);for(let i=0;i<160;i++){const mv=U.map(r=>r.reduce((s,a,k)=>s+a*v[k],0));const nm=Math.sqrt(mv.reduce((s,x)=>s+x*x,0))||1;v=mv.map(x=>x/nm);}const mv=U.map(r=>r.reduce((s,a,k)=>s+a*v[k],0));const lm=mv.reduce((s,x,k)=>s+x*v[k],0);eigs.push({val:Math.abs(lm),vec:v});for(let i=0;i<p;i++)for(let j=0;j<p;j++)U[i][j]-=lm*v[i]*v[j];}
+  eigs.sort((a,b)=>b.val-a.val);
+  const tv=eigs.reduce((a,e)=>a+e.val,0);const ev=eigs.map(e=>e.val/tv);const cum=ev.reduce((acc,v,i)=>[...acc,(acc[i-1]||0)+v],[]);
+  const pc1=eigs[0].vec,pc2=eigs[1]?eigs[1].vec:Array(p).fill(0);
+  const dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0);
+  const proj=Z.map(r=>({x:dot(r,pc1),y:dot(r,pc2)}));
+  document.getElementById('pcares').style.display='block';kc('pca');kc('pcas');
+  const PAL2=['#7dd3fc','#fdba74','#f9a8d4','#6ee7b7','#c4b5fd','#c8a96e'];
+  CH['pca']=new Chart(document.getElementById('pcachart').getContext('2d'),{type:'bar',data:{labels:eigs.map((_,i)=>`PC${i+1}`),datasets:[{label:'Variance (%)',data:ev.map(v=>(v*100).toFixed(2)),backgroundColor:PAL2.slice(0,eigs.length),borderRadius:7},{type:'line',label:'Cumulé (%)',data:cum.map(v=>(v*100).toFixed(2)),borderColor:'#c8a96e',backgroundColor:'transparent',pointRadius:4,borderWidth:2}]},options:co()});
+  CH['pcas']=new Chart(document.getElementById('pcasc').getContext('2d'),{type:'scatter',data:{datasets:[{label:'PC1×PC2',data:proj,backgroundColor:'rgba(196,181,253,.7)',pointRadius:7}]},options:{...co(),scales:{x:{title:{display:true,text:`PC1 (${(ev[0]*100).toFixed(1)}%)`,color:'#8fa0c4'},ticks:{color:'#3d4e72'},grid:{color:'rgba(30,36,56,.5)'}},y:{title:{display:true,text:`PC2 (${(ev[1]?ev[1]*100:0).toFixed(1)}%)`,color:'#8fa0c4'},ticks:{color:'#3d4e72'},grid:{color:'rgba(30,36,56,.5)'}}}}});
+  document.getElementById('pcaout').innerHTML=`<span class="hl2">═══ ANALYSE EN COMPOSANTES PRINCIPALES ═══</span>
+<span class="hl3">Algorithme Python (itération de puissance)</span>
+
+Variables : <span class="hl">${p}</span>   N : <span class="hl">${n}</span>
+
+<span class="hl3">── Valeurs propres ──</span>
+${eigs.map((e,i)=>`PC${i+1} │ λ=${e.val.toFixed(3)} │ ${(ev[i]*100).toFixed(1)}% │ cum=${(cum[i]*100).toFixed(1)}%`).join('\n')}
+
+${cum.findIndex(v=>v>=.8)>=0?`→ <span class="hl">${cum.findIndex(v=>v>=.8)+1} composante(s)</span> expliquent ≥80%`:''}`;
+  toast('✅ ACP calculée');
+}
+
+async function runKM(){
+  const vars=[...document.querySelectorAll('#kmfl input:checked')].map(e=>e.value);
+  const k=parseInt(document.getElementById('kmk').value)||3;
+  const max_iter=parseInt(document.getElementById('kmit').value)||100;
+  if(!vars.length){toast('❌ Sélectionnez des variables','err');return;}
+  toast('⏳ K-Means Python en cours…','info');
+  const r=await api('/api/ml/kmeans',{method:'POST',body:JSON.stringify({session:SID,variables:vars,k,max_iter})});
+  if(!r||!r.succes){toast('❌ '+(r?.erreur||'Erreur'),'err');return;}
+  const res=r.resultat;
+  document.getElementById('kmres').style.display='block';kc('km');kc('kmb');
+  const CP=['#7dd3fc','#6ee7b7','#c4b5fd','#fdba74','#f9a8d4','#c8a96e','#a5f3fc','#fde68a'];
+  CH['km']=new Chart(document.getElementById('kmchart').getContext('2d'),{type:'scatter',data:{datasets:[
+    ...Array.from({length:k},(_,ki)=>({label:`Cluster ${ki+1}`,data:res.projection.filter(p=>p.cluster===ki).map(p=>({x:p.x,y:p.y})),backgroundColor:CP[ki]+'bb',pointRadius:8})),
+    {label:'Centroïdes',data:res.centroides.map((c,ki)=>({x:res.projection.filter(p=>p.cluster===ki).reduce((a,p)=>a+p.x,0)/Math.max(res.sizes[ki],1),y:res.projection.filter(p=>p.cluster===ki).reduce((a,p)=>a+p.y,0)/Math.max(res.sizes[ki],1)})),backgroundColor:'#fff',pointRadius:12,pointStyle:'star'}
+  ]},options:{...co(),scales:{x:{title:{display:true,text:vars[0],color:'#8fa0c4'},ticks:{color:'#3d4e72'},grid:{color:'rgba(30,36,56,.5)'}},y:{title:{display:true,text:vars[1]||vars[0],color:'#8fa0c4'},ticks:{color:'#3d4e72'},grid:{color:'rgba(30,36,56,.5)'}}}}});
+  CH['kmb']=new Chart(document.getElementById('kmbar').getContext('2d'),{type:'bar',data:{labels:Array.from({length:k},(_,ki)=>`Cluster ${ki+1}`),datasets:[{data:res.sizes,backgroundColor:CP.slice(0,k),borderRadius:9}]},options:{...co(),plugins:{legend:{display:false}}}});
+  document.getElementById('kmout').innerHTML=`<span class="hl2">═══ K-MEANS CLUSTERING ═══</span>
+<span class="hl3">Calculé par Python / Flask (K-Means++)</span>
+
+Variables : <span class="hl">${vars.join(', ')}</span>
+K / N     : <span class="hl">${k}</span> / <span class="hl">${res.projection.length}</span>
+
+<span class="hl3">── Résultats ──</span>
+Inertie WCSS : <span class="hl">${res.wcss}</span>
+
+<span class="hl3">── Clusters ──</span>
+${res.sizes.map((s,ki)=>`Cluster ${ki+1} : <span class="hl">${s}</span> obs (${(s/res.projection.length*100).toFixed(1)}%)`).join('\n')}
+
+<span class="hl3">── Centroïdes (échelle originale) ──</span>
+${res.centroides.map((c,ki)=>`C${ki+1}: ${vars.slice(0,4).map((v,j)=>`${v}=${c[j]}`).join(', ')}`).join('\n')}`;
+  toast('✅ K-Means calculé par Python');
+}
+
+/* ════════════════════════════════════════
+   INIT
+════════════════════════════════════════ */
+['e-etude','e-presence','e-conc','e-sat','b-sat','a-eau','a-qual','s-sommeil','s-qsommeil','s-stress','s-fatigue','s-eau','s-bienetre','m-sat','n-net','n-social','n-etude','n-nuit','n-equil'].forEach(id=>rv(id));
+initTheme();
+init();
+</script>
+</body>
+</html>
